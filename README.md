@@ -27,6 +27,14 @@ Copy Image Text 是一个 Obsidian 插件,允许用户复制笔记内容(包括�
 3. 使用快捷键 `Ctrl+Shift+C` (Windows/Linux) 或 `Cmd+Shift+C` (Mac) 复制内容
 4. 在目标应用程序中粘贴内容
 
+## 开发说明
+
+本插件的 `main.js` 文件已包含在版本控制中。这意味着:
+
+1. 克隆仓库后,可以直接使用,无需额外的构建步骤。
+2. 在修改 TypeScript 源代码后,请确保运行 `npm run build` 来更新 `main.js`。
+3. 提交更改时,请包含更新后的 `main.js` 文件。
+
 ## 注意事项
 
 - 图片大小限制为 10MB,超过此大小的图片将不会被复制
