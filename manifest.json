@@ -1,9 +1,9 @@
 {
   "id": "obsidian-copy-image-text",
   "name": "Copy Image Text",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "minAppVersion": "0.15.0",
-  "description": "复制笔记内容（包括文本和图片）到剪贴板。",
+  "description": "Copy note content (including text and images) to clipboard. 复制笔记内容（包括文本和图片）到剪贴板。",
   "author": "msgk",
   "isDesktopOnly": false,
   "permissions": ["clipboard-write"]
