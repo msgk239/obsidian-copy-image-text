@@ -1,0 +1,27 @@
+{
+  "name": "obsidian-copy-image-text",
+  "version": "1.0.0",
+  "description": "复制笔记内容（包括文本和图片）到剪贴板。",
+  "main": "main.js",
+  "scripts": {
+    "dev": "node esbuild.config.mjs",
+    "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+    "version": "node version-bump.mjs && git add manifest.json versions.json"
+  },
+  "keywords": [],
+  "author": "msgk",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^16.11.6",
+    "@typescript-eslint/eslint-plugin": "5.29.0",
+    "@typescript-eslint/parser": "5.29.0",
+    "builtin-modules": "3.3.0",
+    "esbuild": "0.14.47",
+    "obsidian": "latest",
+    "tslib": "2.4.0",
+    "typescript": "4.7.4"
+  },
+  "dependencies": {
+    "tslib": "^2.4.0"
+  }
+}

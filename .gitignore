@@ -1,0 +1,32 @@
+# 忽略 .history 文件夹
+.history/
+
+# 忽略 node_modules 文件夹
+node_modules/
+
+# 忽略构建输出
+main.js
+
+# 忽略操作系统生成的文件
+.DS_Store
+Thumbs.db
+
+# 忽略编辑器生成的文件
+.vscode/
+*.swp
+*.swo
+
+# 忽略日志文件
+*.log
+
+# 忽略环境配置文件
+.env
+
+# 忽略 npm 的调试日志
+npm-debug.log*
+
+# 忽略 yarn 的错误日志
+yarn-error.log
+
+# 忽略 TypeScript 编译输出
+*.js.map
