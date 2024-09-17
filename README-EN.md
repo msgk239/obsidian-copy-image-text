@@ -1,4 +1,4 @@
-# Copy Image Text
+# 复制图文 (Copy Image Text)
 
 Copy Image Text is an Obsidian plugin that allows users to copy note content (including text and images) to the clipboard while maintaining formatting.
 
@@ -55,4 +55,4 @@ Developed and maintained by msgk.
 
 ## Version
 
-Current version: 1.0.3
+Current version: 1.0.4
