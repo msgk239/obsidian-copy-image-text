@@ -1,6 +1,6 @@
 {
   "name": "obsidian-copy-image-text",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Copy note content (including text and images) to clipboard. 复制笔记内容（包括文本和图片）到剪贴板。",
   "main": "main.js",
   "scripts": {
