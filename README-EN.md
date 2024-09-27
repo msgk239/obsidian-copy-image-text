@@ -24,16 +24,18 @@ Copy Image Text is an Obsidian plugin that allows users to copy note content (in
 
 1. Open a note in Obsidian
 2. Select the text you want to copy (if no selection, the entire document will be copied)
-3. Use the hotkey `Ctrl+Shift+C` (Windows/Linux) or `Cmd+Shift+C` (Mac) to copy the content
+3. Use the command palette to execute the "Copy text and images" command
 4. Paste the content in the target application
 
 ## Development Notes
 
-The `main.js` file of this plugin is included in version control. This means:
+This plugin is developed using TypeScript. If you want to contribute:
 
-1. After cloning the repository, it can be used directly without additional build steps.
-2. After modifying the TypeScript source code, please make sure to run `npm run build` to update `main.js`.
-3. When committing changes, please include the updated `main.js` file.
+1. After cloning the repository, run `npm install` to install dependencies.
+2. After modifying the TypeScript source code, run `npm run build` to compile.
+3. The compiled `main.js` file is not included in version control but needs to be manually included in releases.
+
+Note: When publishing a new version, make sure to run `npm run build` first, then add the generated `main.js` file to the release package.
 
 ## Notes
 
@@ -55,4 +57,4 @@ Developed and maintained by msgk.
 
 ## Version
 
-Current version: 1.0.4
+Current version: 1.0.5
