@@ -1,4 +1,4 @@
-import { Editor, MarkdownView, Notice, Plugin, TFile } from 'obsidian';
+import { Editor, MarkdownView, Notice, Plugin, TFile, arrayBufferToBase64 } from 'obsidian';
 
 export default class CopyImageTextPlugin extends Plugin {
   async onload() {
@@ -88,7 +88,7 @@ export default class CopyImageTextPlugin extends Plugin {
       }
 
       const imageArrayBuffer = await this.app.vault.readBinary(imageFile);
-      const base64 = await this.arrayBufferToBase64(imageArrayBuffer);
+      const base64 = arrayBufferToBase64(imageArrayBuffer);
       const mimeType = this.getMimeType(imagePath);
 
       return {
@@ -98,19 +98,6 @@ export default class CopyImageTextPlugin extends Plugin {
     } catch (error) {
       return { original: `![[${imagePath}]]`, replacement: `[图片处理错误: ${imagePath}]` };
     }
-  }
-
-  arrayBufferToBase64(buffer: ArrayBuffer): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const blob = new Blob([buffer]);
-      const reader = new FileReader();
-      reader.onload = () => {
-        const base64 = reader.result?.toString().split(',')[1];
-        resolve(base64 || '');
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
   }
 
   getMimeType(filename: string): string {
