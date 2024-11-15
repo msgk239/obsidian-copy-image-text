@@ -1,11 +1,17 @@
-import { Editor, MarkdownView, Notice, Plugin, TFile, arrayBufferToBase64 } from 'obsidian';
+import { Editor, MarkdownView, Notice, Plugin, TFile, arrayBufferToBase64, Vault } from 'obsidian';
 
 export default class CopyImageTextPlugin extends Plugin {
   async onload() {
     this.addCommand({
       id: 'copy-text',
-      name: '复制文本和图片',
+      name: '复制文本和图片(富文本)',
       editorCallback: (editor: Editor, view: MarkdownView) => this.copyTextAndImages(editor, view)
+    });
+
+    this.addCommand({
+      id: 'copy-markdown',
+      name: '复制为Markdown格式',
+      editorCallback: (editor: Editor, view: MarkdownView) => this.copyAsMarkdown(editor, view)
     });
   }
 
@@ -31,6 +37,54 @@ export default class CopyImageTextPlugin extends Plugin {
     } catch (error) {
       new Notice('复制失败，请稍后重试');
     }
+  }
+
+  async copyAsMarkdown(editor: Editor, view: MarkdownView) {
+    try {
+      let content = editor.getSelection() || editor.getValue();
+
+      if (!view.file) {
+        new Notice('无法获取当前文件信息复制可能不完整');
+        return;
+      }
+
+      content = await this.replaceImageLinks(content, view.file);
+
+      await navigator.clipboard.writeText(content);
+      new Notice('Markdown格式已复制');
+    } catch (error) {
+      new Notice('复制失败，请稍后重试');
+    }
+  }
+
+  async replaceImageLinks(content: string, file: TFile): Promise<string> {
+    const imageRegex = /!\[\[(.*?)\]\]/g;
+    let result = content;
+    
+    for (const match of content.matchAll(imageRegex)) {
+      const imagePath = match[1];
+      const imageFile = this.app.vault.getFiles().find(f => 
+        f.name.toLowerCase().includes(imagePath.split('/').pop()?.toLowerCase() || '')
+      );
+
+      if (imageFile) {
+        let absolutePath = this.app.vault.getResourcePath(imageFile)
+          .replace(/^app:\/\/.*?\//, '')
+          .replace(/\?.*$/, '')
+          .replace(/\\/g, '/');
+        
+        absolutePath = decodeURI(absolutePath);
+        
+        const fileUrl = 'file:///' + absolutePath;
+                
+        result = result.replace(
+          `![[${imagePath}]]`, 
+          `![${imagePath}](${fileUrl})`
+        );
+      }
+    }
+    
+    return result;
   }
 
   async convertToHtml(content: string, file: TFile): Promise<string> {
