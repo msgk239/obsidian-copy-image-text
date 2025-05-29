@@ -1,8 +1,5 @@
-// main.ts: 这是 Obsidian 插件的主文件，负责实现复制文本、图片以及导出HTML等核心功能。
 import { Editor, MarkdownView, Notice, Plugin, TFile, arrayBufferToBase64, Vault } from 'obsidian';
 import * as fs from 'fs/promises';
-// 引入 Electron remote 模块，用于访问系统对话框
-// 注意：在 Obsidian 插件中，通常需要通过 @electron/remote 访问
 const { dialog } = require('@electron/remote');
 export default class CopyImageTextPlugin extends Plugin {
   async onload() {
@@ -50,7 +47,6 @@ export default class CopyImageTextPlugin extends Plugin {
     }
   }
 
-  // 用于存储最近一次导出的HTML文件路径
   private lastExportedHtmlPath: string | null = null;
 
   async exportAsHtml(editor: Editor, view: MarkdownView) {
@@ -65,11 +61,10 @@ export default class CopyImageTextPlugin extends Plugin {
       const htmlContent = await this.convertToHtml(content, view.file);
       const fileName = view.file.basename + '.html';
 
-      // 使用 Electron 的 dialog.showOpenDialog 来选择导出目录
       const result = await dialog.showOpenDialog({
-        properties: ['openDirectory', 'createDirectory'], // 允许选择目录和创建目录
+        properties: ['openDirectory', 'createDirectory'],
         title: '选择HTML导出目录',
-        defaultPath: view.file.parent?.path || '' // 默认路径为当前笔记目录，如果为空则使用系统默认
+        defaultPath: view.file.parent?.path || ''
       });
 
       if (result.canceled || result.filePaths.length === 0) {
@@ -79,44 +74,27 @@ export default class CopyImageTextPlugin extends Plugin {
 
       let exportFolderPath = result.filePaths[0];
 
-      // 确保路径以 '/' 结尾，如果不是根目录
       if (exportFolderPath && !exportFolderPath.endsWith('/') && exportFolderPath !== '/') {
         exportFolderPath += '/';
       }
 
       const filePath = `${exportFolderPath}${fileName}`;
 
-      // 检查导出路径是否在 Obsidian vault 内部
-      // 注意：app.vault.adapter.basePath 可能会导致类型错误，
-      // 更好的方式是使用 app.vault.getRoot().path 来获取 vault 根目录的绝对路径
       const vaultRootPath = this.app.vault.getRoot().path;
       
-      // 规范化路径，移除末尾斜杠以便比较
       const normalizedExportPath = exportFolderPath.endsWith('/') ? exportFolderPath.slice(0, -1) : exportFolderPath;
       const normalizedVaultRootPath = vaultRootPath.endsWith('/') ? vaultRootPath.slice(0, -1) : vaultRootPath;
 
-      // 比较时，需要确保两者都是绝对路径。
-      // dialog.showOpenDialog 返回的是绝对路径。
-      // app.vault.getRoot().path 返回的是相对于 vault 的路径，但在这里我们需要绝对路径进行比较。
-      // 假设 vaultRootPath 已经是绝对路径，或者可以通过某种方式转换为绝对路径。
-      // 实际上，app.vault.getRoot().path 返回的是 vault 内部的相对路径，例如 "/"。
-      // 为了与系统绝对路径比较，我们需要获取 Obsidian vault 的实际绝对路径。
-      // 这是一个挑战，因为 Obsidian 没有直接暴露一个获取 vault 绝对路径的简单 API。
-      // 临时解决方案：假设用户选择的路径在 vault 外部，总是使用 fs 模块写入。
-      // 如果需要精确判断，可能需要更复杂的逻辑，例如通过 Node.js path 模块解析。
 
-      // 简化处理：总是使用 fs 模块写入，因为 Electron dialog 返回的是系统绝对路径
-      // 并且 fs 模块可以处理 vault 内部和外部的路径。
       const nodeFsPath = exportFolderPath.replace(/\//g, '\\') + fileName;
       await fs.mkdir(exportFolderPath, { recursive: true }); // 确保目录存在
       await fs.writeFile(nodeFsPath, htmlContent);
       new Notice(`文件已成功导出到: ${nodeFsPath}`);
       
-      this.lastExportedHtmlPath = filePath; // 存储路径
+      this.lastExportedHtmlPath = filePath;
 
 
     } catch (error) {
-      console.error('导出HTML失败:', error);
       new Notice('导出HTML失败，请稍后重试');
     }
   }
@@ -171,10 +149,9 @@ export default class CopyImageTextPlugin extends Plugin {
   }
 
   async convertToHtml(content: string, file: TFile): Promise<string> {
-    const imageRegex = /!\[\[(.*?)\]\]/g; // Obsidian 内部链接
-    const externalImageRegex = /!\[.*?\]\((file:\/\/\/.+?)\)/g; // 外部图片链接，例如 ![](file:///...)
+    const imageRegex = /!\[\[(.*?)\]\]/g;
+    const externalImageRegex = /!\[.*?\]\((file:\/\/\/.+?)\)/g;
 
-    // 处理 Obsidian 内部链接图片
     const internalImageReplacements = await Promise.all(Array.from(content.matchAll(imageRegex)).map(
       match => this.replaceImageWithBase64(match[1], file)
     ));
@@ -184,7 +161,6 @@ export default class CopyImageTextPlugin extends Plugin {
       htmlContent = htmlContent.replace(original, replacement);
     });
 
-    // 处理外部图片链接
     const externalImageReplacements = await Promise.all(Array.from(htmlContent.matchAll(externalImageRegex)).map(
       match => this.replaceExternalImageWithBase64(match[1]) as Promise<{ original: string, replacement: string }>
     ));
@@ -193,23 +169,19 @@ export default class CopyImageTextPlugin extends Plugin {
       htmlContent = htmlContent.replace(original, replacement);
     });
 
-    // 处理分割线
     htmlContent = htmlContent.replace(/^---$/gm, '<hr style="border: 0; border-top: 1px solid #ddd; margin: 20px 0;">');
 
-    // 处理代码块
     htmlContent = htmlContent.replace(/```([\s\S]*?)```/g, (match, code) => {
       const escapedCode = this.escapeHtml(code.trim());
       return `<pre style="background-color: #f6f8fa; border-radius: 3px; padding: 16px; overflow: auto;"><code style="font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace; font-size: 14px; line-height: 1.5;">${escapedCode}</code></pre>`;
     });
 
-    // 处理标题
     htmlContent = htmlContent.replace(/^(#+)\s+(.*?)$/gm, (match, hashes, title) => {
       const level = hashes.length;
       const fontSize = 28 - (level * 2);
       return `<h${level} style="font-size: ${fontSize}px; font-weight: bold; margin: 10px 0;">${title}</h${level}>`;
     });
 
-    // 其他 Markdown 到 HTML 的转换
     htmlContent = htmlContent
       .replace(/\n/g, '<br>')
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
@@ -217,23 +189,13 @@ export default class CopyImageTextPlugin extends Plugin {
       .replace(/`(.+?)`/g, '<code style="background-color: #f0f0f0; padding: 2px 4px; border-radius: 3px;">$1</code>');
     
     htmlContent = htmlContent.replace(/==([^=\n]+?)==/g, (match, p1) => {
-      const truncatedMatch = match.length > 100 ? match.substring(0, 50) + '...' + match.substring(match.length - 50) : match;
-      const truncatedP1 = p1.length > 100 ? p1.substring(0, 50) + '...' + p1.substring(p1.length - 50) : p1;
-      console.log('Original highlight match:', truncatedMatch, 'Length:', match.length);
-      console.log('Captured content (p1):', truncatedP1, 'Length:', p1.length);
       const replaced = `<span style="background-color: yellow;">${p1}</span>`;
-      console.log('Replaced HTML (truncated):', replaced.length > 100 ? replaced.substring(0, 50) + '...' + replaced.substring(replaced.length - 50) : replaced);
       return replaced;
-    }); // 处理高亮
+    });
 
     htmlContent = htmlContent
       .replace(/(?<!\!)\[(.+?)\]\((.+?)\)/g, '<a href="$2" style="color: #576b95; text-decoration: none;">$1</a>');
 
-    // 架构基础知识：
-    // 在网页设计中，要实现内容块的水平居中，常用的方法是设置元素的 `max-width`（限制最大宽度）和 `margin: 0 auto;`。
-    // `max-width` 确保内容不会过宽，而 `margin: 0 auto;` 则会将左右外边距自动分配，从而使元素在父容器中水平居中。
-    // 这里的 `text-align: center;` 仅影响块级元素内部的行内内容（如文本、图片）的水平对齐，
-    // 而 `margin: 0 auto;` 影响的是块级元素自身的水平位置。
     return `<div style="max-width: 800px; margin: 0 auto; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; color: #333; line-height: 1.6;">${htmlContent}</div>`;
   }
 
@@ -268,10 +230,8 @@ export default class CopyImageTextPlugin extends Plugin {
 
   async replaceExternalImageWithBase64(imagePath: string): Promise<{ original: string, replacement: string }> {
     try {
-      // 移除 'file:///' 前缀以获取实际文件路径
       let filePath = imagePath.replace(/^file:\/\/\//, '');
 
-      // 处理 Windows 路径，将 / 替换为 \
       if (process.platform === 'win32') {
         filePath = filePath.replace(/\//g, '\\');
       }
@@ -285,7 +245,6 @@ export default class CopyImageTextPlugin extends Plugin {
         replacement: `<img src="data:${mimeType};base64,${base64}" alt="${imagePath}" style="max-width: 100%;">`
       };
     } catch (error) {
-      console.error(`处理外部图片失败: ${imagePath}`, error);
       return { original: `![](${imagePath})`, replacement: `[外部图片处理错误: ${imagePath}]` };
     }
   }
