@@ -1,6 +1,6 @@
 {
   "name": "copy-image-text",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "复制图文 (Copy Image Text) - Copy note content (including text and images) to clipboard. 复制笔记内容（包括文本和图片）到剪贴板。",
   "main": "main.js",
   "scripts": {
