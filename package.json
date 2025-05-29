@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "node esbuild.config.mjs",
     "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
-    "version": "node version-bump.mjs %npm_package_version% && git add manifest.json versions.json README.md README-EN.md"
+    "version": "node version-bump.mjs %npm_package_version% && git add manifest.json versions.json README.md README-EN.md",
+    "postversion": "git tag -d v%npm_package_version% && git tag %npm_package_version%"
   },
   "keywords": [],
   "author": "msgk",
