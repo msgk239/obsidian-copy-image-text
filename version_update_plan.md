@@ -8,15 +8,19 @@
 
 ## 版本更新机制
 
-项目使用 `npm version` 命令来管理版本。在 `package.json` 的 `scripts` 中定义了一个 `version` 脚本：
-`"version": "node version-bump.mjs %npm_package_version% && git add manifest.json versions.json"`
+项目使用 `npm version` 命令来管理版本。在 `package.json` 的 `scripts` 中定义了 `version` 和 `postversion` 脚本：
+`"version": "node version-bump.mjs %npm_package_version% && git add manifest.json versions.json",`
+`"postversion": "git tag -d v%npm_package_version% && git tag %npm_package_version%"`
 
 这意味着当您运行 `npm version <新版本号>` 命令时，npm 会自动执行以下操作：
 1.  更新 `package.json` 中的 `version` 字段为 `<新版本号>`。
 2.  执行 `version-bump.mjs` 脚本，该脚本会读取 `manifest.json` 和 `versions.json`，并将它们内部的版本号更新为 `<新版本号>`。
 3.  将 `manifest.json` 和 `versions.json` 的更改添加到 Git 暂存区。
 4.  自动创建一个 Git commit，提交版本更新。
-5.  自动创建一个 Git tag，标记这个版本。
+5.  自动创建一个 Git tag，标记这个版本（默认带有 `v` 前缀）。
+6.  **执行 `postversion` 脚本**：
+    *   删除本地的带有 `v` 前缀的 Git 标签。
+    *   创建本地不带 `v` 前缀的 Git 标签。
 
 ## 更新计划
 
@@ -37,5 +41,8 @@ graph TD
     D --> F{version-bump.mjs 更新 versions.json};
     E & F --> G[git add manifest.json versions.json];
     G --> H[npm 自动创建 Git commit];
-    H --> I[npm 自动创建 Git tag];
-    I --> J[版本更新完成];
+    H --> I[npm 自动创建 Git tag (带 v 前缀)];
+    I --> J[npm 执行 scripts.postversion 脚本];
+    J --> K[删除本地带 v 前缀的标签];
+    K --> L[创建本地不带 v 前缀的标签];
+    L --> M[版本更新完成];
