@@ -5,6 +5,8 @@
 	"minAppVersion": "0.15.0",
 	"description": "Copy note content (including text and images) to clipboard. 复制笔记内容（包括文本和图片）到剪贴板。",
 	"author": "msgk",
-	"permissions": ["clipboard-write"],
+	"permissions": [
+		"clipboard-write"
+	],
 	"isDesktopOnly": true
 }
