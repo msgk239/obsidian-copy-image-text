@@ -8,6 +8,7 @@ Copy Image Text is an Obsidian plugin that allows users to copy note content (in
   - Copy text and images (rich text format): Suitable for Word, WeChat public account editor, etc.
   - Copy as Markdown format: Suitable for other Markdown editors
 - Automatically convert Obsidian images to inline base64 format (rich text mode) or standard Markdown image links (Markdown mode)
+- **New:** Supports exporting note content to HTML files for easy viewing or sharing in browsers.
 - Maintain Markdown formatting, including headers, bold, italic, code blocks, etc.
 - Specially optimized for display in WeChat public account editor
 
