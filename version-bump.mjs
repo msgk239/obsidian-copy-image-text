@@ -21,3 +21,8 @@ writeFileSync("versions.json", JSON.stringify(versions, null, "\t"));
 let readme = readFileSync("README.md", "utf8");
 readme = readme.replace(/(当前版本: )\d+\.\d+\.\d+/, `$1${targetVersion}`);
 writeFileSync("README.md", readme);
+
+// 更新 README-EN.md
+let readmeEn = readFileSync("README-EN.md", "utf8");
+readmeEn = readmeEn.replace(/(Current version: )\d+\.\d+\.\d+/, `$1${targetVersion}`);
+writeFileSync("README-EN.md", readmeEn);
