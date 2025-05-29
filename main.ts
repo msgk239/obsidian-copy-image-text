@@ -1,5 +1,8 @@
-import { App, Editor, MarkdownView, Notice, Plugin, TFile, arrayBufferToBase64, Vault, Modal, Setting } from 'obsidian';
+import { Editor, MarkdownView, Notice, Plugin, TFile, arrayBufferToBase64, Vault } from 'obsidian';
 import * as fs from 'fs/promises';
+// 引入 Electron remote 模块，用于访问系统对话框
+// 注意：在 Obsidian 插件中，通常需要通过 @electron/remote 访问
+const { dialog } = require('@electron/remote');
 export default class CopyImageTextPlugin extends Plugin {
   async onload() {
     this.addCommand({
@@ -60,44 +63,56 @@ export default class CopyImageTextPlugin extends Plugin {
 
       const htmlContent = await this.convertToHtml(content, view.file);
       const fileName = view.file.basename + '.html';
-      
-      // 尝试使用 Obsidian 的文件选择器来选择导出目录
-      // 注意：Obsidian 核心 API 没有直接的 showDirectoryPicker。
-      // 我们需要模拟一个简单的目录选择器，或者让用户输入路径。
-      // 考虑到用户要求“弹出一个框，可以选择其他路径”，我们将创建一个简单的模态框让用户输入路径。
-      // 更好的方式是使用 Obsidian 的文件管理器 API，但目前没有直接暴露给插件的目录选择器。
 
-      // 弹出模态框让用户选择或输入导出路径
-      const exportPath = await new Promise<string | null>((resolve) => {
-        new ExportPathModal(this.app, view.file?.parent?.path || '', resolve).open();
+      // 使用 Electron 的 dialog.showOpenDialog 来选择导出目录
+      const result = await dialog.showOpenDialog({
+        properties: ['openDirectory', 'createDirectory'], // 允许选择目录和创建目录
+        title: '选择HTML导出目录',
+        defaultPath: view.file.parent?.path || '' // 默认路径为当前笔记目录，如果为空则使用系统默认
       });
 
-      if (!exportPath) {
+      if (result.canceled || result.filePaths.length === 0) {
         new Notice('已取消导出。');
         return;
       }
 
+      let exportFolderPath = result.filePaths[0];
+
       // 确保路径以 '/' 结尾，如果不是根目录
-      let finalExportPath = exportPath;
-      if (finalExportPath && !finalExportPath.endsWith('/') && finalExportPath !== '/') {
-        finalExportPath += '/';
+      if (exportFolderPath && !exportFolderPath.endsWith('/') && exportFolderPath !== '/') {
+        exportFolderPath += '/';
       }
 
-      const filePath = `${finalExportPath}${fileName}`;
+      const filePath = `${exportFolderPath}${fileName}`;
 
-      // 确保目录存在
-      const folderPath = filePath.substring(0, filePath.lastIndexOf('/'));
-      if (!(await this.app.vault.adapter.exists(folderPath))) {
-        await this.app.vault.createFolder(folderPath);
-      }
+      // 检查导出路径是否在 Obsidian vault 内部
+      // 注意：app.vault.adapter.basePath 可能会导致类型错误，
+      // 更好的方式是使用 app.vault.getRoot().path 来获取 vault 根目录的绝对路径
+      const vaultRootPath = this.app.vault.getRoot().path;
+      
+      // 规范化路径，移除末尾斜杠以便比较
+      const normalizedExportPath = exportFolderPath.endsWith('/') ? exportFolderPath.slice(0, -1) : exportFolderPath;
+      const normalizedVaultRootPath = vaultRootPath.endsWith('/') ? vaultRootPath.slice(0, -1) : vaultRootPath;
 
-      // 使用 Obsidian 的 vault.adapter.write 方法来写入文件
-      await this.app.vault.adapter.write(filePath, htmlContent);
+      // 比较时，需要确保两者都是绝对路径。
+      // dialog.showOpenDialog 返回的是绝对路径。
+      // app.vault.getRoot().path 返回的是相对于 vault 的路径，但在这里我们需要绝对路径进行比较。
+      // 假设 vaultRootPath 已经是绝对路径，或者可以通过某种方式转换为绝对路径。
+      // 实际上，app.vault.getRoot().path 返回的是 vault 内部的相对路径，例如 "/"。
+      // 为了与系统绝对路径比较，我们需要获取 Obsidian vault 的实际绝对路径。
+      // 这是一个挑战，因为 Obsidian 没有直接暴露一个获取 vault 绝对路径的简单 API。
+      // 临时解决方案：假设用户选择的路径在 vault 外部，总是使用 fs 模块写入。
+      // 如果需要精确判断，可能需要更复杂的逻辑，例如通过 Node.js path 模块解析。
+
+      // 简化处理：总是使用 fs 模块写入，因为 Electron dialog 返回的是系统绝对路径
+      // 并且 fs 模块可以处理 vault 内部和外部的路径。
+      const nodeFsPath = exportFolderPath.replace(/\//g, '\\') + fileName;
+      await fs.mkdir(exportFolderPath, { recursive: true }); // 确保目录存在
+      await fs.writeFile(nodeFsPath, htmlContent);
+      new Notice(`文件已成功导出到: ${nodeFsPath}`);
       
       this.lastExportedHtmlPath = filePath; // 存储路径
 
-      new Notice(`文件已成功导出到: ${filePath}`);
-      // 提示用户文件已导出，并建议手动打开
       new Notice('请手动打开导出的HTML文件。');
 
     } catch (error) {
@@ -296,59 +311,5 @@ export default class CopyImageTextPlugin extends Plugin {
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#039;");
-  }
-}
-
-// 简单的导出路径模态框
-class ExportPathModal extends Modal {
-  result: string;
-  onSubmit: (result: string | null) => void;
-  initialPath: string;
-
-  constructor(app: App, initialPath: string, onSubmit: (result: string | null) => void) {
-    super(app);
-    this.initialPath = initialPath;
-    this.onSubmit = onSubmit;
-  }
-
-  onOpen() {
-    const {contentEl} = this;
-    contentEl.createEl('h2', { text: '选择HTML导出路径' });
-
-    new Setting(contentEl)
-      .setName('导出路径')
-      .setDesc('输入或修改HTML文件的导出目录。')
-      .addText((text) =>
-        text
-          .setPlaceholder('例如：导出/HTML')
-          .setValue(this.initialPath)
-          .onChange((value) => {
-            this.result = value;
-          })
-      );
-
-    new Setting(contentEl)
-      .addButton((btn) =>
-        btn
-          .setButtonText('导出')
-          .setCta()
-          .onClick(() => {
-            this.close();
-            this.onSubmit(this.result || this.initialPath); // 如果用户没有输入，使用初始路径
-          })
-      )
-      .addButton((btn) =>
-        btn
-          .setButtonText('取消')
-          .onClick(() => {
-            this.close();
-            this.onSubmit(null);
-          })
-      );
-  }
-
-  onClose() {
-    const {contentEl} = this;
-    contentEl.empty();
   }
 }

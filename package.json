@@ -12,6 +12,7 @@
   "author": "msgk",
   "license": "MIT",
   "devDependencies": {
+    "@electron/remote": "^2.1.2",
     "@types/node": "^16.11.6",
     "@typescript-eslint/eslint-plugin": "5.29.0",
     "@typescript-eslint/parser": "5.29.0",
