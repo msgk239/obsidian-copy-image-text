@@ -1,3 +1,4 @@
+// main.ts: 这是 Obsidian 插件的主文件，负责实现复制文本、图片以及导出HTML等核心功能。
 import { Editor, MarkdownView, Notice, Plugin, TFile, arrayBufferToBase64, Vault } from 'obsidian';
 import * as fs from 'fs/promises';
 // 引入 Electron remote 模块，用于访问系统对话框
@@ -113,7 +114,6 @@ export default class CopyImageTextPlugin extends Plugin {
       
       this.lastExportedHtmlPath = filePath; // 存储路径
 
-      new Notice('请手动打开导出的HTML文件。');
 
     } catch (error) {
       console.error('导出HTML失败:', error);
@@ -229,7 +229,12 @@ export default class CopyImageTextPlugin extends Plugin {
     htmlContent = htmlContent
       .replace(/(?<!\!)\[(.+?)\]\((.+?)\)/g, '<a href="$2" style="color: #576b95; text-decoration: none;">$1</a>');
 
-    return `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; color: #333; line-height: 1.6; text-align: center;">${htmlContent}</div>`;
+    // 架构基础知识：
+    // 在网页设计中，要实现内容块的水平居中，常用的方法是设置元素的 `max-width`（限制最大宽度）和 `margin: 0 auto;`。
+    // `max-width` 确保内容不会过宽，而 `margin: 0 auto;` 则会将左右外边距自动分配，从而使元素在父容器中水平居中。
+    // 这里的 `text-align: center;` 仅影响块级元素内部的行内内容（如文本、图片）的水平对齐，
+    // 而 `margin: 0 auto;` 影响的是块级元素自身的水平位置。
+    return `<div style="max-width: 800px; margin: 0 auto; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; color: #333; line-height: 1.6;">${htmlContent}</div>`;
   }
 
   async replaceImageWithBase64(imagePath: string, file: TFile): Promise<{ original: string, replacement: string }> {
