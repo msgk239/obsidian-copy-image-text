@@ -70,4 +70,4 @@ Developed and maintained by msgk.
 
 ## Version
 
-Current version: 1.1.3
+Current version: 1.1.4
