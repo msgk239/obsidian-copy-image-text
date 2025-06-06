@@ -286,7 +286,6 @@ export default class CopyImageTextPlugin extends Plugin {
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;")
       .replace(/#/g, "&#35;"); // 转义 # 符号，防止在代码块中被误识别为标题
   }
 }
