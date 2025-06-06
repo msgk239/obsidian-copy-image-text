@@ -171,7 +171,7 @@ export default class CopyImageTextPlugin extends Plugin {
 
     htmlContent = htmlContent.replace(/^---$/gm, '<hr style="border: 0; border-top: 1px solid #ddd; margin: 20px 0;">');
 
-    htmlContent = htmlContent.replace(/```([\s\S]*?)```/g, (match, code) => {
+    htmlContent = htmlContent.replace(/```(?:\w+)?\n([\s\S]*?)```/g, (match, code) => {
       const escapedCode = this.escapeHtml(code.trim());
       return `<pre style="background-color: #f6f8fa; border-radius: 3px; padding: 16px; overflow: auto;"><code style="font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace; font-size: 14px; line-height: 1.5;">${escapedCode}</code></pre>`;
     });
