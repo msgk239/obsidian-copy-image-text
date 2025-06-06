@@ -157,6 +157,8 @@ export default class CopyImageTextPlugin extends Plugin {
     ));
     
     let htmlContent = content;
+    // 预处理：将连续的空行减少为单个空行，以美化生成的HTML
+    htmlContent = htmlContent.replace(/\n\s*\n/g, '\n\n');
     internalImageReplacements.forEach(({ original, replacement }) => {
       htmlContent = htmlContent.replace(original, replacement);
     });
@@ -208,7 +210,21 @@ export default class CopyImageTextPlugin extends Plugin {
       htmlContent = htmlContent.replace(key, value);
     });
 
+    htmlContent = this.cleanAndFormatHtml(htmlContent);
     return `<div style="max-width: 800px; margin: 0 auto; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; color: #333; line-height: 1.6;">${htmlContent}</div>`;
+  }
+
+  private cleanAndFormatHtml(html: string): string {
+    // 移除标签之间的多余空白，但保留标签内的内容
+    html = html.replace(/>\s+</g, '><');
+
+    // 移除连续的换行符，只保留一个
+    html = html.replace(/\n\n+/g, '\n');
+
+    // 移除开头和结尾的换行符
+    html = html.trim();
+
+    return html;
   }
 
   async replaceImageWithBase64(imagePath: string, file: TFile): Promise<{ original: string, replacement: string }> {
