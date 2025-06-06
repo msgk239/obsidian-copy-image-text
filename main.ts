@@ -169,12 +169,19 @@ export default class CopyImageTextPlugin extends Plugin {
       htmlContent = htmlContent.replace(original, replacement);
     });
 
-    htmlContent = htmlContent.replace(/^---$/gm, '<hr style="border: 0; border-top: 1px solid #ddd; margin: 20px 0;">');
+    const codeBlockPlaceholders = new Map<string, string>();
+    let placeholderIndex = 0;
 
+    // 1. 用占位符替换代码块
     htmlContent = htmlContent.replace(/```(?:\w+)?\n([\s\S]*?)```/g, (match, code) => {
+      const placeholder = `___CODE_BLOCK_PLACEHOLDER_${placeholderIndex}___`;
       const escapedCode = this.escapeHtml(code.trim());
-      return `<pre style="background-color: #f6f8fa; border-radius: 3px; padding: 16px; overflow: auto;"><code style="font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace; font-size: 14px; line-height: 1.5;">${escapedCode}</code></pre>`;
+      codeBlockPlaceholders.set(placeholder, `<pre style="background-color: #f6f8fa; border-radius: 3px; padding: 16px; overflow: auto;"><code style="font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace; font-size: 14px; line-height: 1.5;">${escapedCode}</code></pre>`);
+      placeholderIndex++;
+      return placeholder;
     });
+
+    htmlContent = htmlContent.replace(/^---$/gm, '<hr style="border: 0; border-top: 1px solid #ddd; margin: 20px 0;">');
 
     htmlContent = htmlContent.replace(/^(#+)\s+(.*?)$/gm, (match, hashes, title) => {
       const level = hashes.length;
@@ -195,6 +202,11 @@ export default class CopyImageTextPlugin extends Plugin {
 
     htmlContent = htmlContent
       .replace(/(?<!\!)\[(.+?)\]\((.+?)\)/g, '<a href="$2" style="color: #576b95; text-decoration: none;">$1</a>');
+
+    // 2. 将占位符替换回原始代码块
+    codeBlockPlaceholders.forEach((value, key) => {
+      htmlContent = htmlContent.replace(key, value);
+    });
 
     return `<div style="max-width: 800px; margin: 0 auto; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; color: #333; line-height: 1.6;">${htmlContent}</div>`;
   }
