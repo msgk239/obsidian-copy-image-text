@@ -175,10 +175,10 @@ export default class CopyImageTextPlugin extends Plugin {
     let placeholderIndex = 0;
 
     // 1. 用占位符替换代码块
-    htmlContent = htmlContent.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
+    htmlContent = htmlContent.replace(/(^|\n)```(\w+)?\n([\s\S]*?)\n(?<!\S)```($|\n)/g, (match, p1, lang, code, p4) => {
       const placeholder = `___CODE_BLOCK_PLACEHOLDER_${placeholderIndex}___`;
-      const language = this.getLanguageFromCodeBlock(match); // 从匹配中提取语言
-      const lines = code.trimStart().trimEnd().split('\n');
+      const language = this.getLanguageFromCodeBlock(match[0]); // 从匹配中提取语言
+      const lines = code.split('\n');
       
       let codeHtml = '';
       for (let i = 0; i < lines.length; i++) {
