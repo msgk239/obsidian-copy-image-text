@@ -175,10 +175,30 @@ export default class CopyImageTextPlugin extends Plugin {
     let placeholderIndex = 0;
 
     // 1. 用占位符替换代码块
-    htmlContent = htmlContent.replace(/```(?:\w+)?\n([\s\S]*?)```/g, (match, code) => {
+    htmlContent = htmlContent.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
       const placeholder = `___CODE_BLOCK_PLACEHOLDER_${placeholderIndex}___`;
-      const escapedCode = this.escapeHtml(code.trim());
-      codeBlockPlaceholders.set(placeholder, `<pre style="background-color: #f6f8fa; border-radius: 3px; padding: 16px; overflow: auto;"><code style="font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace; font-size: 14px; line-height: 1.5;">${escapedCode}</code></pre>`);
+      const language = this.getLanguageFromCodeBlock(match); // 从匹配中提取语言
+      const lines = code.split('\n');
+      
+      let codeHtml = '';
+      for (let i = 0; i < lines.length; i++) {
+        const highlightedLine = this.highlightCodeLine(lines[i]);
+        codeHtml += `<code><span leaf="">${highlightedLine}</span></code>\n`;
+      }
+
+      const lineNumbersHtml = Array.from({ length: lines.length }, (_, i) => `<li></li>`).join('\n');
+
+      const codeBlockHtml = `
+<section class="code-snippet__js code-snippet__fix code-snippet__${language}">
+  <ul class="code-snippet__line-index code-snippet__${language}">
+    ${lineNumbersHtml}
+  </ul>
+  <pre class="code-snippet__js code-snippet code-snippet_nowrap" data-lang="${language}">
+    ${codeHtml.trim()}
+  </pre>
+</section>
+      `;
+      codeBlockPlaceholders.set(placeholder, codeBlockHtml);
       placeholderIndex++;
       return placeholder;
     });
@@ -296,6 +316,36 @@ export default class CopyImageTextPlugin extends Plugin {
     }
   }
 
+private getLanguageFromCodeBlock(codeBlockHeader: string): string {
+    const match = codeBlockHeader.match(/```(\w+)?/);
+    return match && match[1] ? match[1] : 'js'; // 默认语言为js
+  }
+private highlightCodeLine(line: string): string {
+    // 替换开头的空格为 &nbsp;
+    let processedLine = line.replace(/^( +)/g, (match) => {
+      return match.replace(/ /g, '&nbsp;');
+    });
+
+    // 替换行内连续的两个或更多空格为 &nbsp;
+    processedLine = processedLine.replace(/ {2,}/g, (match) => {
+      return match.replace(/ /g, '&nbsp;');
+    });
+
+    // 简化语法高亮：只处理字符串
+    processedLine = processedLine.replace(/(["'`])(.*?)\1/g, (match, quote, content) => {
+      // 对字符串内容进行HTML转义，但不转义引号本身
+      const escapedContent = this.escapeHtml(content);
+      return `${quote}<span class="code-snippet__string">${escapedContent}</span>${quote}`;
+    });
+
+    // 对整行进行HTML转义，确保所有特殊字符都被正确处理
+    // 注意：这里需要确保在字符串高亮之后进行，避免二次转义
+
+    // 恢复之前转义的引号，因为它们是字符串高亮的一部分
+    processedLine = processedLine.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&grave;/g, '`');
+
+    return processedLine;
+  }
   private escapeHtml(unsafe: string): string {
     return unsafe
       .replace(/&/g, "&amp;")
@@ -305,3 +355,5 @@ export default class CopyImageTextPlugin extends Plugin {
       .replace(/#/g, "&#35;"); // 转义 # 符号，防止在代码块中被误识别为标题
   }
 }
+
+
