@@ -178,7 +178,7 @@ export default class CopyImageTextPlugin extends Plugin {
     htmlContent = htmlContent.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
       const placeholder = `___CODE_BLOCK_PLACEHOLDER_${placeholderIndex}___`;
       const language = this.getLanguageFromCodeBlock(match); // 从匹配中提取语言
-      const lines = code.split('\n');
+      const lines = code.trimStart().trimEnd().split('\n');
       
       let codeHtml = '';
       for (let i = 0; i < lines.length; i++) {
